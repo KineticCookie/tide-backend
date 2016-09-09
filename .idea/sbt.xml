@@ -12,7 +12,7 @@
           </set>
         </option>
         <option name="resolveSbtClassifiers" value="true" />
-        <option name="sbtVersion" value="0.13.8" />
+        <option name="sbtVersion" value="0.13.11" />
       </SbtProjectSettings>
     </option>
   </component>
