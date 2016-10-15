@@ -8,9 +8,9 @@ import play.api.libs.json._
 /**
   * Created by Bulat on 13.09.2016.
   */
-case class DataFlowDiagram(id: UUID, nodes: Seq[DataFlowNode], links: Map[UUID, UUID])
+case class DFDiagram(id: UUID, nodes: Seq[DFNode], links: Map[UUID, UUID])
 
-case class DataFlowNode(id: UUID, category: String, data: String)
+case class DFNode(id: UUID, category: String, data: String)
 
 object DataFlowDiagramImplicits {
   implicit val writesLinks: Writes[Map[UUID, UUID]] = new Writes[Map[UUID, UUID]] {
@@ -27,27 +27,27 @@ object DataFlowDiagramImplicits {
       })
   }
 
-  implicit val writesNode: Writes[DataFlowNode] = (
+  implicit val writesNode: Writes[DFNode] = (
     (JsPath \ "id").write[UUID] and
       (JsPath \ "category").write[String] and
       (JsPath \ "data").write[String]
-    ) (unlift(DataFlowNode.unapply))
+    ) (unlift(DFNode.unapply))
 
-  implicit val readsNode: Reads[DataFlowNode] = (
+  implicit val readsNode: Reads[DFNode] = (
     (JsPath \ "id").read[UUID] and
       (JsPath \ "category").read[String] and
       (JsPath \ "data").read[String]
-    ) (DataFlowNode.apply _)
+    ) (DFNode.apply _)
 
-  implicit val writesDiagram: Writes[DataFlowDiagram] = (
+  implicit val writesDiagram: Writes[DFDiagram] = (
     (JsPath \ "id").write[UUID] and
-      (JsPath \ "nodes").write[Seq[DataFlowNode]] and
+      (JsPath \ "nodes").write[Seq[DFNode]] and
       (JsPath \ "links").write[Map[UUID, UUID]]
-    ) (unlift(DataFlowDiagram.unapply))
+    ) (unlift(DFDiagram.unapply))
 
-  implicit val readsDiagram: Reads[DataFlowDiagram] = (
+  implicit val readsDiagram: Reads[DFDiagram] = (
     (JsPath \ "id").read[UUID] and
-      (JsPath \ "nodes").read[Seq[DataFlowNode]] and
+      (JsPath \ "nodes").read[Seq[DFNode]] and
       (JsPath \ "links").read[Map[UUID, UUID]]
-    ) (DataFlowDiagram.apply _)
+    ) (DFDiagram.apply _)
 }

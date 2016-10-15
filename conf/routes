@@ -2,9 +2,8 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
-GET     /                           controllers.HomeController.index
-GET     /ws                         controllers.HomeController.ws
-GET     /sentiment/:symbol          controllers.StockSentiment.get(symbol)
+POST    /register                   controllers.AuthController.register
+POST    /login                      controllers.AuthController.login
 
-# Map static resources from the /public folder to the /assets URL path
-GET     /assets/*file               controllers.Assets.at(path="/public", file)
+GET     /flow                       controllers.DataFlowController.getDataFlow(token: String, id: Option[String])
+POST    /flow                       controllers.DataFlowController.postDataFlow(token: String)

@@ -1,16 +1,14 @@
-# Persons schema
+# Sessions schema
 
 # --- !Ups
 
-CREATE TABLE Users (
+CREATE TABLE Sessions (
     id UUID NOT NULL,
-    fullname VARCHAR(255),
-    email VARCHAR(255),
-    pswd VARCHAR(255),
+    token UUID NOT NULL,
     PRIMARY KEY (id),
-    UNIQUE(email)
+    UNIQUE(token)
 );
 
 # --- !Downs
 
-DROP TABLE Users;
+DROP TABLE Sessions;

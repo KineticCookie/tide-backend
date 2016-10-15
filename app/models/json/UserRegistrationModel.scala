@@ -1,4 +1,4 @@
-package models.views
+package models.json
 
 import play.api.libs.functional.syntax._
 import play.api.libs.json.{JsPath, Reads, Writes}
@@ -13,11 +13,11 @@ object UserRegistrationModelImplicits {
     (JsPath \ "fullname").write[String] and
       (JsPath \ "email").write[String] and
       (JsPath \ "pswd").write[String]
-    )(unlift(UserRegistrationModel.unapply))
+    ) (unlift(UserRegistrationModel.unapply))
 
   implicit val reads: Reads[UserRegistrationModel] = (
     (JsPath \ "fullname").read[String] and
       (JsPath \ "email").read[String] and
       (JsPath \ "pswd").read[String]
-    )(UserRegistrationModel.apply _)
+    ) (UserRegistrationModel.apply _)
 }

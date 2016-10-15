@@ -6,6 +6,7 @@
         <entry key="root">
           <value>
             <ProjectSettingsEntry>
+              <option name="sourceDir" value="C:\Users\Bulat\Dev\tide\app" />
               <option name="confDir" value="C:\Users\Bulat\Dev\tide\app" />
               <option name="templateImports">
                 <list>

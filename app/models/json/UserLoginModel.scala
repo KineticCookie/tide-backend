@@ -1,4 +1,4 @@
-package models.views
+package models.json
 
 import play.api.libs.functional.syntax._
 import play.api.libs.json._
@@ -12,10 +12,10 @@ object UserLoginModelImplicits {
   implicit val writes: Writes[UserLoginModel] = (
     (JsPath \ "email").write[String] and
       (JsPath \ "pswd").write[String]
-    )(unlift(UserLoginModel.unapply))
+    ) (unlift(UserLoginModel.unapply))
 
   implicit val reads: Reads[UserLoginModel] = (
     (JsPath \ "email").read[String] and
       (JsPath \ "pswd").read[String]
-    )(UserLoginModel.apply _)
+    ) (UserLoginModel.apply _)
 }

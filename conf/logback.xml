@@ -16,6 +16,7 @@
     </appender>
 
     <logger name="play" level="INFO"/>
+    <logger name="slick" level="INFO"/>
 
     <!-- actors logging -->
     <logger name="akka.actor" level="INFO"/>
