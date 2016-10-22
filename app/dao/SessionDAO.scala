@@ -4,11 +4,13 @@ import java.sql.Timestamp
 import java.time.LocalDateTime
 import java.util.UUID
 import javax.inject.Inject
+
 import models.db.{LoginSession, User}
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import slick.driver.JdbcProfile
 import slick.lifted.ProvenShape
+
 import scala.concurrent.Future
 
 /**
@@ -23,18 +25,22 @@ class SessionDAO @Inject()(protected val dbConfigProvider: DatabaseConfigProvide
   def all(): Future[Seq[LoginSession]] = db.run(Sessions.result)
 
   def createToken(person: User): Future[UUID] = {
-    val uuid = UUID.randomUUID()
-    val expires = LocalDateTime.now().plusHours(1)
+    val uuid = UUID.randomUUID
+    val expires = LocalDateTime.now.plusHours(1)
     db.run(Sessions += LoginSession(person.id, uuid, expires))
     Future(uuid)
   }
 
+  def deleteToken(token: UUID): Future[Boolean] = {
+    db.run(Sessions.filter{_.token === token}.delete) map {
+      case x if x > 0 => true
+      case _ => false
+    }
+  }
+
   def getUserId(token: UUID): Future[Option[UUID]] = {
     val query = Sessions.filter(_.token === token).result.headOption.map {
-      case None =>
-        None
-      case Some(x) =>
-        Some(x.user_id)
+      x => x map(_.user_id)
     }
     db.run(query)
   }

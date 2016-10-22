@@ -4,20 +4,21 @@ import java.util.UUID
 
 import com.google.inject.Inject
 import dao.{DataFlowDAO, SessionDAO}
-import models.json.DFNode
-import models.json.DFDiagram
+import models.ast.ASTree
+import models.db.{DataFlowLink, DataFlowNode}
+import models.json.{DFDiagram, DFNode}
 import play.api.libs.json._
 import play.api.mvc.{Action, Controller}
 
+import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, Future}
 
 /**
   * Created by Bulat on 13.09.2016.
   */
 class DataFlowController @Inject()(configuration: play.api.Configuration, dataFlowDAO: DataFlowDAO, sessionDAO: SessionDAO) extends Controller {
-  import models.json.DataFlowDiagramImplicits._
+  import models.json.DataFlowDiagram._
 
   private lazy val dbTimeout = Duration.fromNanos(configuration.underlying.getInt("tide.db.timeout"))
 
@@ -26,7 +27,7 @@ class DataFlowController @Inject()(configuration: play.api.Configuration, dataFl
       case Some(userId) => id match {
           case Some(diagramId) => // Return one specific diagram
             val dUUID = UUID.fromString(diagramId)
-            val diagramOpt = Await.result(dataFlowDAO.getDiagram(userId, dUUID), dbTimeout)
+            val diagramOpt = Await.result(dataFlowDAO.getDiagram(dUUID), dbTimeout)
 
             diagramOpt match {
               case Some(diagram) => // query nodes and links
@@ -57,16 +58,34 @@ class DataFlowController @Inject()(configuration: play.api.Configuration, dataFl
     sessionDAO.getUserId(UUID.fromString(token)) map {
       case Some(user) =>
         request.body.validate[DFDiagram] map { diagram =>
-          InternalServerError("Loading is not implemented yet")
+          val nodes = diagram.nodes.map(x => DataFlowNode(diagram.id, x.id, x.category, x.data))
+          val links = diagram.links.map(x => DataFlowLink(diagram.id, from = x._1, to = x._2)).toSeq
+          dataFlowDAO.insertDiagram(user, diagram.id, nodes, links)
+          Ok("Added")
         } recoverTotal{ err =>
-          ExpectationFailed(Json.toJson("Invalid JSON"))
+          ExpectationFailed(Json.toJson("Invalid JSON tree"))
         }
       case None =>
         Unauthorized("Unauthorized")
     }
   }
 
-  def getCompiledDataFlow(token: String, id: String) = Action.async(parse.json) { request =>
-    ???
+  def getCompiledDataFlow(token: String, id: String) = Action.async { request =>
+    sessionDAO.getUserId(UUID.fromString(token)) map {
+      case Some(user) =>
+        val dUUID = UUID.fromString(id)
+        val diagramOpt = Await.result(dataFlowDAO.getDiagram(dUUID), dbTimeout)
+
+        diagramOpt match {
+          case Some(diagram) =>
+            val nodes = Await.result(dataFlowDAO.getNodes(dUUID), dbTimeout)
+            val links = Await.result(dataFlowDAO.getLinks(dUUID), dbTimeout)
+            Ok(ASTree.toAst(diagram.diagramId, nodes, links).toString)
+          case None =>
+            NotFound("Diagram is not found")
+        }
+      case None =>
+        Unauthorized("Unauthorized")
+    }
   }
 }

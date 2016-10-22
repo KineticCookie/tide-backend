@@ -1,16 +1,18 @@
 package controllers
 
 import java.util.UUID
+
 import com.google.inject.Inject
 import dao.{SessionDAO, UserDAO}
 import models.db.User
 import models.json.{UserLoginModel, UserRegistrationModel}
 import org.mindrot.jbcrypt.BCrypt
 import play.api.mvc.{Action, Controller}
+
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, Future}
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 class AuthController @Inject()(configuration: play.api.Configuration, userDAO: UserDAO, sessionDAO: SessionDAO) extends Controller {
   private lazy val dbTimeout = Duration.fromNanos(configuration.underlying.getInt("tide.db.timeout"))
@@ -21,7 +23,7 @@ class AuthController @Inject()(configuration: play.api.Configuration, userDAO: U
     *
     * Registers user with given credentials
     */
-  val register = Action.async(parse.json) { implicit request =>
+  def register = Action.async(parse.json) { implicit request =>
     import models.json.UserRegistrationModelImplicits._
 
     val data = request.body
@@ -46,7 +48,7 @@ class AuthController @Inject()(configuration: play.api.Configuration, userDAO: U
     *
     * Creates seesion with user. Returns session id.
     */
-  val login = Action.async(parse.json) { implicit request =>
+  def login = Action.async(parse.json) { implicit request =>
     import models.json.UserLoginModelImplicits._
 
     request.body.validate[UserLoginModel] map { login =>
@@ -62,6 +64,20 @@ class AuthController @Inject()(configuration: play.api.Configuration, userDAO: U
 
     } recoverTotal {
       err => Future(BadRequest("Shit happened"))
+    }
+  }
+
+  def logout(token: String) = Action.async { implicit request =>
+    Try(UUID.fromString(token)) match {
+      case Success(uid) =>
+          sessionDAO.deleteToken(uid) map{
+            case true =>
+              Ok("Logged out")
+            case false =>
+              Unauthorized(s"Unauthorized")
+          }
+      case Failure(ex) =>
+        Future(Unauthorized(s"Invalid token"))
     }
   }
 }

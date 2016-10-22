@@ -2,9 +2,11 @@ package dao
 
 import java.util.UUID
 import javax.inject.Inject
-import models.db.{DataFlowNode, DataFlowLink, UserToDiagram}
+
+import models.db.{DataFlowLink, DataFlowNode, Diagram}
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
 import slick.driver.JdbcProfile
+
 import scala.concurrent.Future
 
 /**
@@ -24,10 +26,8 @@ class DataFlowDAO @Inject()(protected val dbConfigProvider: DatabaseConfigProvid
     Diagrams.filter(_.userId === userId).map(_.diagramId).result
   )
 
-  def getDiagram(userId: UUID, diagramId: UUID): Future[Option[UserToDiagram]] = db.run(
-    Diagrams.filter { x =>
-      x.userId === userId && x.diagramId === diagramId
-    }.result.headOption
+  def getDiagram(diagramId: UUID): Future[Option[Diagram]] = db.run(
+    Diagrams.filter { _.diagramId === diagramId}.result.headOption
   )
 
   def getNodes(diagramId: UUID): Future[Seq[DataFlowNode]] = db.run(
@@ -38,14 +38,35 @@ class DataFlowDAO @Inject()(protected val dbConfigProvider: DatabaseConfigProvid
     Links.filter(_.diagramId === diagramId).result
   )
 
-  def insertDiagram(diagramId: UUID, nodes: Seq[DataFlowNode], links: Seq[DataFlowLink]) =
-    ???
+  def insertDiagram(userId: UUID,
+                    diagramId: UUID,
+                    nodes: Seq[DataFlowNode],
+                    links: Seq[DataFlowLink]) = {
+    import scala.concurrent._
+    import ExecutionContext.Implicits.global
+    val res = db.run(Diagrams.filter {
+        x => x.userId === userId && x.diagramId === diagramId
+      }.result.headOption)
+    res.map {
+      case Some(u2d) => // Remove old tree
+        db.run(Nodes.filter {
+          _.diagramId === diagramId
+        }.delete)
+        db.run(Links.filter {
+          _.diagramId === diagramId
+        }.delete)
+      case None => // New tree - add entry
+        db.run(Diagrams += Diagram(userId, diagramId))
+    }
+    db.run(Nodes ++= nodes)
+    db.run(Links ++= links)
+  }
 
-  private class DFUsers(tag: Tag) extends Table[UserToDiagram](tag, "data_diagrams") {
+  private class DFUsers(tag: Tag) extends Table[Diagram](tag, "data_diagrams") {
     def userId = column[UUID]("userId", O.PrimaryKey)
     def diagramId = column[UUID]("diagramId", O.PrimaryKey)
 
-    override def * = (userId, diagramId) <> (UserToDiagram.tupled, UserToDiagram.unapply)
+    override def * = (userId, diagramId) <> (Diagram.tupled, Diagram.unapply)
   }
 
   private class DFNodes(tag: Tag) extends Table[DataFlowNode](tag, "data_nodes") {

@@ -12,7 +12,8 @@ case class DFDiagram(id: UUID, nodes: Seq[DFNode], links: Map[UUID, UUID])
 
 case class DFNode(id: UUID, category: String, data: String)
 
-object DataFlowDiagramImplicits {
+object DataFlowDiagram {
+
   implicit val writesLinks: Writes[Map[UUID, UUID]] = new Writes[Map[UUID, UUID]] {
     override def writes(o: Map[UUID, UUID]): JsValue = {
       val newMap = o map { kv => kv._1.toString -> kv._2.toString }

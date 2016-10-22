@@ -2,11 +2,13 @@ package dao
 
 import java.util.UUID
 import javax.inject.Inject
+
 import models.db.User
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
 import play.api.libs.concurrent.Execution.Implicits.defaultContext
 import slick.driver.JdbcProfile
 import slick.lifted.ProvenShape
+
 import scala.concurrent.Future
 import scala.util.{Failure, Success, Try}
 

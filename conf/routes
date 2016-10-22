@@ -4,6 +4,8 @@
 
 POST    /register                   controllers.AuthController.register
 POST    /login                      controllers.AuthController.login
+POST    /logout                     controllers.AuthController.logout(token: String)
 
-GET     /flow                       controllers.DataFlowController.getDataFlow(token: String, id: Option[String])
-POST    /flow                       controllers.DataFlowController.postDataFlow(token: String)
+GET     /diagram                    controllers.DataFlowController.getDataFlow(token: String, id: Option[String])
+POST    /diagram                    controllers.DataFlowController.postDataFlow(token: String)
+GET     /diagram/source             controllers.DataFlowController.getCompiledDataFlow(token: String, id: String)
