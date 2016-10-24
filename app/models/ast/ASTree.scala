@@ -40,17 +40,9 @@ object ASTree {
       _.to == rootId
     }.map { x => buildSubTree(nodes, links, x.from).get }
 
-    node.category match {
-      case "DataNode" =>
-        new DataNode(node.id, node.data, children)
-
-      case "MapNode" =>
-        new MapNode(node.id ,node.data, children)
-
-      case "ReduceNode" =>
-        new ReduceNode(node.id, node.data, children)
-
-      case x => throw new IllegalArgumentException(s"Invalid json node: $x")
+    ASTNode.create(node.id, node.category, node.data, children) match {
+      case Some(astNode) => astNode
+      case None => throw new IllegalArgumentException(s"Invalid json node: ${node.id}")
     }
   })
 }

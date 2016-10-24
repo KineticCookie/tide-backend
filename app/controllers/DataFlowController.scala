@@ -4,7 +4,7 @@ import java.util.UUID
 
 import com.google.inject.Inject
 import dao.{DataFlowDAO, SessionDAO}
-import models.ast.ASTree
+import models.ast.{ASTree, PythonGenerator}
 import models.db.{DataFlowLink, DataFlowNode}
 import models.json.{DFDiagram, DFNode}
 import play.api.libs.json._
@@ -13,6 +13,7 @@ import play.api.mvc.{Action, Controller}
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.duration.Duration
+import scala.util.{Failure, Success}
 
 /**
   * Created by Bulat on 13.09.2016.
@@ -80,7 +81,16 @@ class DataFlowController @Inject()(configuration: play.api.Configuration, dataFl
           case Some(diagram) =>
             val nodes = Await.result(dataFlowDAO.getNodes(dUUID), dbTimeout)
             val links = Await.result(dataFlowDAO.getLinks(dUUID), dbTimeout)
-            Ok(ASTree.toAst(diagram.diagramId, nodes, links).toString)
+            val ast = ASTree.toAst(diagram.diagramId, nodes, links)
+            ast match {
+              case Success(tree) =>
+                val pythonCodeGen = new PythonGenerator
+                pythonCodeGen.visit(tree.root)
+                Ok(pythonCodeGen.toSourceCode)
+              case Failure(err) =>
+                InternalServerError(s"Invalid AST-tree: ${err.toString}")
+            }
+
           case None =>
             NotFound("Diagram is not found")
         }
